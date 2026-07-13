@@ -242,25 +242,45 @@ body {
 }
 
 .date-field {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.65rem;
+  display: flex;
   align-items: center;
+  gap: 0.5rem;
   min-width: 0;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding-right: 0.75rem;
 }
 
-@media (max-width: 420px) {
-  .date-field {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.35rem;
-  }
+.date-field:focus-within {
+  outline: 2px solid rgba(211, 84, 0, 0.35);
+  outline-offset: 1px;
+}
+
+.date-field .form__input,
+.date-field input[type="date"].form__input {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  box-shadow: none;
+}
+
+.date-field .form__input:focus,
+.date-field input[type="date"].form__input:focus {
+  outline: none;
 }
 
 .date-field__weekday {
+  flex: 0 0 auto;
   color: var(--text-muted);
   font-size: 0.92rem;
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
+  line-height: 1;
 }
 
 .date-field__weekday:empty {
