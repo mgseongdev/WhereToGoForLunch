@@ -40,6 +40,8 @@ body {
   max-width: 760px;
   margin: 0 auto;
   padding: 1.5rem 1rem 2.5rem;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .header {
@@ -76,6 +78,7 @@ body {
   border-radius: var(--radius);
   padding: 1.35rem;
   box-shadow: var(--shadow);
+  min-width: 0;
 }
 
 .card--recommend {
@@ -222,6 +225,8 @@ body {
 .select,
 .form__input {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 0.65rem 0.75rem;
@@ -231,9 +236,24 @@ body {
 }
 
 .select {
-  min-width: 140px;
+  min-width: 0;
   width: auto;
   flex: 1;
+}
+
+/* 모바일에서 native date input 고유 너비가 카드 밖으로 튀는 것 방지 */
+input[type="date"].form__input {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+input[type="date"].form__input::-webkit-date-and-time-value {
+  text-align: left;
+  min-width: 0;
 }
 
 .form__input:focus,
@@ -255,6 +275,7 @@ body {
 .form__row {
   display: grid;
   gap: 0.35rem;
+  min-width: 0;
 }
 
 .form__label {
