@@ -56,12 +56,14 @@ const els = {
 };
 
 async function apiRequest(path, options = {}) {
+  const headers = { ...(options.headers ?? {}) };
+  if (options.body && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
+  }
+
   const response = await fetch(path, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers ?? {}),
-    },
     ...options,
+    headers,
   });
 
   let data = null;
@@ -172,6 +174,10 @@ function createAddressSearch({
   onSelectPlace,
   sortByReference = false,
 }) {
+  if (!input || !list || !latInput || !lngInput || !resolvedInput) {
+    throw new Error("주소 검색 요소를 찾지 못했습니다. 페이지를 새로고침해 주세요.");
+  }
+
   let debounceTimer = null;
   let selectedPlace = null;
 
@@ -785,8 +791,10 @@ function renderReferenceStatus(referencePoint) {
 
   els.referenceStatus.textContent = `${referencePoint.name} · ${referencePoint.address}`;
   els.referenceStatus.classList.add("reference-status--active");
-  referenceAddressSearch.fill(referencePoint);
-  els.referenceName.value = referencePoint.name;
+  referenceAddressSearch?.fill(referencePoint);
+  if (els.referenceName) {
+    els.referenceName.value = referencePoint.name;
+  }
 }
 
 function renderRestaurantSelect(restaurants) {
@@ -1059,17 +1067,42 @@ async function handleRecommendVisit() {
 }
 
 async function refresh() {
-  const referencePoint = await loadReferencePoint();
-  const restaurants = await loadRestaurants(referencePoint);
-  const visits = await loadVisits();
+  let referencePoint = null;
+  let restaurants = [];
+  let visits = [];
+
+  try {
+    referencePoint = await loadReferencePoint();
+  } catch (error) {
+    console.error("기준 위치 갱신 오류:", error);
+  }
+
+  try {
+    restaurants = await loadRestaurants(referencePoint);
+  } catch (error) {
+    console.error("식당 목록 갱신 오류:", error);
+    showToast(error.message || "식당 목록을 불러오지 못했습니다.", true);
+  }
+
+  try {
+    visits = await loadVisits();
+  } catch (error) {
+    console.error("방문 기록 갱신 오류:", error);
+    showToast(error.message || "방문 기록을 불러오지 못했습니다.", true);
+  }
 
   cachedRestaurants = restaurants;
   cachedVisits = visits;
 
-  renderReferenceStatus(referencePoint);
-  renderRestaurants(restaurants, visits);
-  renderRestaurantSelect(restaurants);
-  renderVisits(visits);
+  try {
+    renderRestaurants(restaurants, visits);
+    renderRestaurantSelect(restaurants);
+    renderVisits(visits);
+    renderReferenceStatus(referencePoint);
+  } catch (error) {
+    console.error("화면 갱신 오류:", error);
+    showToast(error.message || "화면을 갱신하지 못했습니다.", true);
+  }
 
   return { referencePoint, restaurants, visits };
 }
@@ -1439,48 +1472,53 @@ function bindEvents() {
 }
 
 async function init() {
-  bindEvents();
-  setDefaultVisitDate();
+  try {
+    bindEvents();
+    setDefaultVisitDate();
 
-  restaurantAddressSearch = createAddressSearch({
-    input: els.newRestaurantAddress,
-    list: els.newRestaurantSuggestions,
-    latInput: els.newRestaurantLat,
-    lngInput: els.newRestaurantLng,
-    resolvedInput: els.newRestaurantResolved,
-    getSearchQuery: (query) => {
-      const name = els.newRestaurantName.value.trim();
-      if (document.activeElement === els.newRestaurantAddress) {
-        return name ? `${name} ${query}` : query;
+    restaurantAddressSearch = createAddressSearch({
+      input: els.newRestaurantAddress,
+      list: els.newRestaurantSuggestions,
+      latInput: els.newRestaurantLat,
+      lngInput: els.newRestaurantLng,
+      resolvedInput: els.newRestaurantResolved,
+      getSearchQuery: (query) => {
+        const name = els.newRestaurantName.value.trim();
+        if (document.activeElement === els.newRestaurantAddress) {
+          return name ? `${name} ${query}` : query;
+        }
+        return query;
+      },
+      onSelectPlace: (place) => {
+        els.newRestaurantName.value = place.name;
+      },
+      sortByReference: true,
+    });
+
+    els.newRestaurantName.addEventListener("input", () => {
+      restaurantAddressSearch.search(els.newRestaurantName.value, { clearOnSearch: false });
+    });
+
+    els.newRestaurantName.addEventListener("focus", () => {
+      const query = els.newRestaurantName.value.trim();
+      if (query.length >= 2 && els.newRestaurantSuggestions.children.length > 0) {
+        els.newRestaurantSuggestions.hidden = false;
       }
-      return query;
-    },
-    onSelectPlace: (place) => {
-      els.newRestaurantName.value = place.name;
-    },
-    sortByReference: true,
-  });
+    });
 
-  els.newRestaurantName.addEventListener("input", () => {
-    restaurantAddressSearch.search(els.newRestaurantName.value, { clearOnSearch: false });
-  });
+    referenceAddressSearch = createAddressSearch({
+      input: els.referenceAddress,
+      list: els.referenceSuggestions,
+      latInput: els.referenceLat,
+      lngInput: els.referenceLng,
+      resolvedInput: els.referenceResolved,
+    });
 
-  els.newRestaurantName.addEventListener("focus", () => {
-    const query = els.newRestaurantName.value.trim();
-    if (query.length >= 2 && els.newRestaurantSuggestions.children.length > 0) {
-      els.newRestaurantSuggestions.hidden = false;
-    }
-  });
-
-  referenceAddressSearch = createAddressSearch({
-    input: els.referenceAddress,
-    list: els.referenceSuggestions,
-    latInput: els.referenceLat,
-    lngInput: els.referenceLng,
-    resolvedInput: els.referenceResolved,
-  });
-
-  await refresh();
+    await refresh();
+  } catch (error) {
+    console.error("초기화 오류:", error);
+    showToast(error.message || "앱 초기화에 실패했습니다.", true);
+  }
 }
 
 init();
