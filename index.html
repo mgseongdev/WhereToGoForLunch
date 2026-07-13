@@ -116,8 +116,11 @@
           <div class="form__row">
             <label class="form__label" for="visit-date">방문 날짜</label>
             <div class="date-field">
-              <input type="date" id="visit-date" name="date" class="form__input" required>
-              <span id="visit-date-weekday" class="date-field__weekday" aria-live="polite"></span>
+              <div class="date-field__summary" aria-hidden="true">
+                <span id="visit-date-text" class="date-field__value"></span>
+                <span id="visit-date-weekday" class="date-field__weekday"></span>
+              </div>
+              <input type="date" id="visit-date" name="date" class="form__input date-field__input" required>
             </div>
           </div>
           <div class="form__row">

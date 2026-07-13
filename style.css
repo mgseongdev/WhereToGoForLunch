@@ -242,15 +242,16 @@ body {
 }
 
 .date-field {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
   min-width: 0;
   width: 100%;
+  min-height: 2.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface);
-  padding-right: 0.75rem;
+  padding: 0.65rem 2.5rem 0.65rem 0.75rem;
 }
 
 .date-field:focus-within {
@@ -258,24 +259,22 @@ body {
   outline-offset: 1px;
 }
 
-.date-field .form__input,
-.date-field input[type="date"].form__input {
-  flex: 1;
+.date-field__summary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
   min-width: 0;
-  width: auto;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  box-shadow: none;
+  pointer-events: none;
+  z-index: 1;
 }
 
-.date-field .form__input:focus,
-.date-field input[type="date"].form__input:focus {
-  outline: none;
+.date-field__value {
+  font: inherit;
+  color: var(--text);
+  white-space: nowrap;
 }
 
 .date-field__weekday {
-  flex: 0 0 auto;
   color: var(--text-muted);
   font-size: 0.92rem;
   font-weight: 600;
@@ -283,22 +282,59 @@ body {
   line-height: 1;
 }
 
-.date-field__weekday:empty {
+.date-field__weekday:empty,
+.date-field__value:empty {
   display: none;
 }
 
-/* 모바일에서 native date input 고유 너비가 카드 밖으로 튀는 것 방지 */
-input[type="date"].form__input {
-  display: block;
+.date-field__input,
+.date-field input[type="date"].date-field__input {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  appearance: none;
+  height: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.75rem;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  box-shadow: none;
+  cursor: pointer;
   -webkit-appearance: none;
+  appearance: none;
 }
 
-input[type="date"].form__input::-webkit-date-and-time-value {
-  text-align: left;
+.date-field__input:focus,
+.date-field input[type="date"].date-field__input:focus {
+  outline: none;
+}
+
+.date-field__input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.2rem;
+  height: 1.2rem;
+  cursor: pointer;
+  opacity: 1;
+  z-index: 2;
+}
+
+.date-field__input::-webkit-datetime-edit,
+.date-field__input::-webkit-datetime-edit-fields-wrapper,
+.date-field__input::-webkit-datetime-edit-text,
+.date-field__input::-webkit-datetime-edit-month-field,
+.date-field__input::-webkit-datetime-edit-day-field,
+.date-field__input::-webkit-datetime-edit-year-field {
+  color: transparent;
+}
+
+input[type="date"].form__input {
+  display: block;
+  max-width: 100%;
   min-width: 0;
 }
 

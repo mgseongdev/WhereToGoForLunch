@@ -42,6 +42,7 @@ const els = {
   restaurantSelect: document.getElementById("restaurant-select"),
   form: document.getElementById("visit-form"),
   visitDate: document.getElementById("visit-date"),
+  visitDateText: document.getElementById("visit-date-text"),
   visitDateWeekday: document.getElementById("visit-date-weekday"),
   memo: document.getElementById("memo"),
   visitList: document.getElementById("visit-list"),
@@ -368,9 +369,35 @@ function formatWeekday(dateString) {
   return date.toLocaleDateString("ko-KR", { weekday: "long" });
 }
 
-function updateVisitDateWeekday(input = els.visitDate, label = els.visitDateWeekday) {
-  if (!input || !label) return;
-  label.textContent = input.value ? formatWeekday(input.value) : "";
+function formatDateShort(dateString) {
+  const date = new Date(`${dateString}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return dateString;
+  return date.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  });
+}
+
+function updateVisitDateWeekday(input = els.visitDate) {
+  if (!input) return;
+
+  const field = input.closest(".date-field");
+  const valueEl =
+    input === els.visitDate
+      ? els.visitDateText
+      : field?.querySelector(".date-field__value");
+  const weekdayEl =
+    input === els.visitDate
+      ? els.visitDateWeekday
+      : field?.querySelector("[data-inline-visit-weekday], .date-field__weekday");
+
+  if (valueEl) {
+    valueEl.textContent = input.value ? formatDateShort(input.value) : "";
+  }
+  if (weekdayEl) {
+    weekdayEl.textContent = input.value ? formatWeekday(input.value) : "";
+  }
 }
 
 function showToast(message, isError = false) {
@@ -1145,8 +1172,11 @@ function renderVisitEditItem(visit) {
       <div class="form__row">
         <label class="form__label" for="inline-visit-date">방문 날짜</label>
         <div class="date-field">
-          <input type="date" id="inline-visit-date" class="form__input" value="${escapeHtml(visit.date)}" required>
-          <span class="date-field__weekday" data-inline-visit-weekday>${escapeHtml(formatWeekday(visit.date))}</span>
+          <div class="date-field__summary" aria-hidden="true">
+            <span class="date-field__value">${escapeHtml(formatDateShort(visit.date))}</span>
+            <span class="date-field__weekday" data-inline-visit-weekday>${escapeHtml(formatWeekday(visit.date))}</span>
+          </div>
+          <input type="date" id="inline-visit-date" class="form__input date-field__input" value="${escapeHtml(visit.date)}" required>
         </div>
       </div>
       <div class="form__row">
@@ -1656,17 +1686,11 @@ function bindEvents() {
   els.visitDate.addEventListener("input", () => updateVisitDateWeekday());
   els.visitList.addEventListener("change", (event) => {
     if (event.target?.id !== "inline-visit-date") return;
-    const weekday = event.target
-      .closest(".date-field")
-      ?.querySelector("[data-inline-visit-weekday]");
-    updateVisitDateWeekday(event.target, weekday);
+    updateVisitDateWeekday(event.target);
   });
   els.visitList.addEventListener("input", (event) => {
     if (event.target?.id !== "inline-visit-date") return;
-    const weekday = event.target
-      .closest(".date-field")
-      ?.querySelector("[data-inline-visit-weekday]");
-    updateVisitDateWeekday(event.target, weekday);
+    updateVisitDateWeekday(event.target);
   });
   els.restaurantList.addEventListener("click", handleRestaurantListClick);
   els.visitList.addEventListener("click", handleVisitListClick);
