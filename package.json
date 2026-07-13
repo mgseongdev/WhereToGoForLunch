@@ -1,0 +1,16 @@
+{
+  "name": "wheretogoforlunch",
+  "private": true,
+  "version": "1.0.0",
+  "description": "어디가실래요? — 점심 식당 추천",
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "vercel dev"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.50.0"
+  },
+  "devDependencies": {
+    "vercel": "^44.0.0"
+  }
+}

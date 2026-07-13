@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>어디가실래요?</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header__inner">
+        <h1 class="logo">어디가실래요?</h1>
+        <p class="tagline">점심 식당을 기록하고, 다음 메뉴를 추천받으세요</p>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="card card--recommend" aria-labelledby="recommend-title">
+        <h2 id="recommend-title" class="card__title">오늘 점심 추천</h2>
+        <p class="card__desc">먹고 싶은 종류와 거리를 골라 두면, 그 조건에 맞는 식당 중에서 추천해 드려요.</p>
+        <div class="recommend-panel">
+          <fieldset class="filter-group">
+            <legend class="filter-group__title">음식 종류</legend>
+            <div class="checkbox-grid">
+              <label class="checkbox-item checkbox-item--all"><input type="checkbox" id="filter-cuisine-all" checked> 전체</label>
+              <label class="checkbox-item"><input type="checkbox" name="filter-cuisine" value="한식" checked> 한식</label>
+              <label class="checkbox-item"><input type="checkbox" name="filter-cuisine" value="중식" checked> 중식</label>
+              <label class="checkbox-item"><input type="checkbox" name="filter-cuisine" value="일식" checked> 일식</label>
+              <label class="checkbox-item"><input type="checkbox" name="filter-cuisine" value="아시안" checked> 아시안</label>
+              <label class="checkbox-item"><input type="checkbox" name="filter-cuisine" value="양식" checked> 양식</label>
+              <label class="checkbox-item"><input type="checkbox" name="filter-cuisine" value="패스트푸드" checked> 패스트푸드</label>
+              <label class="checkbox-item"><input type="checkbox" name="filter-cuisine" value="분식" checked> 분식</label>
+              <label class="checkbox-item"><input type="checkbox" name="filter-cuisine" value="기타" checked> 기타</label>
+            </div>
+          </fieldset>
+
+          <fieldset class="filter-group">
+            <legend class="filter-group__title">거리</legend>
+            <div class="checkbox-grid">
+              <label class="checkbox-item checkbox-item--all"><input type="checkbox" id="filter-distance-all" checked> 전체</label>
+              <label class="checkbox-item"><input type="checkbox" name="filter-distance" value="near" checked> 가까움 (~400m)</label>
+              <label class="checkbox-item"><input type="checkbox" name="filter-distance" value="medium" checked> 중간 (~1km)</label>
+              <label class="checkbox-item"><input type="checkbox" name="filter-distance" value="far" checked> 먼 곳</label>
+            </div>
+          </fieldset>
+
+          <fieldset class="filter-group">
+            <legend class="filter-group__title">팀장님</legend>
+            <div class="checkbox-grid">
+              <label class="checkbox-item checkbox-item--all"><input type="checkbox" id="filter-team-leader-all" checked> 전체</label>
+              <label class="checkbox-item"><input type="checkbox" name="filter-team-leader" value="ok" checked> 함께 가능</label>
+              <label class="checkbox-item"><input type="checkbox" name="filter-team-leader" value="excluded" checked> 팀장님 불가</label>
+            </div>
+          </fieldset>
+
+          <div class="recommend-panel__actions">
+            <button type="button" id="btn-recommend" class="btn btn--primary">추천 받기</button>
+          </div>
+        </div>
+        <div id="recommend-result" class="recommend-result" hidden>
+          <div class="recommend-result__badge">추천</div>
+          <h3 id="recommend-name" class="recommend-result__name"></h3>
+          <p id="recommend-meta" class="recommend-result__meta"></p>
+          <div class="recommend-result__actions">
+            <button type="button" id="btn-recommend-visit" class="btn btn--secondary">여기 가기</button>
+          </div>
+        </div>
+        <p id="recommend-empty" class="empty-message" hidden>등록된 식당이 없거나 필터 조건에 맞는 식당이 없어요.</p>
+      </section>
+
+      <section class="card" aria-labelledby="reference-title">
+        <h2 id="reference-title" class="card__title">거리 기준 위치</h2>
+        <p class="card__desc">회사나 집 주소를 설정하면 식당까지 거리를 자동으로 계산합니다.</p>
+        <p id="reference-status" class="reference-status">기준 위치가 설정되지 않았습니다.</p>
+        <form id="reference-form" class="form" novalidate>
+          <div class="form__grid form__grid--2">
+            <div class="form__row">
+              <label class="form__label" for="reference-name">이름</label>
+              <input type="text" id="reference-name" class="form__input" value="회사" maxlength="40" required>
+            </div>
+            <div class="form__row">
+              <label class="form__label" for="reference-address">주소 검색</label>
+              <div class="address-field">
+                <input
+                  type="text"
+                  id="reference-address"
+                  class="form__input address-field__input"
+                  placeholder="주소 또는 건물명 검색"
+                  autocomplete="off"
+                  required
+                >
+                <input type="hidden" id="reference-lat">
+                <input type="hidden" id="reference-lng">
+                <input type="hidden" id="reference-resolved" value="">
+                <ul id="reference-suggestions" class="address-suggestions" hidden></ul>
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn--secondary">기준 위치 저장</button>
+        </form>
+      </section>
+
+      <section class="card" aria-labelledby="form-title">
+        <h2 id="form-title" class="card__title">방문 기록 추가</h2>
+        <form id="visit-form" class="form" novalidate>
+          <div class="form__row">
+            <label class="form__label" for="restaurant-select">식당 선택</label>
+            <select id="restaurant-select" name="restaurantId" class="form__input" required>
+              <option value="">식당을 선택하세요</option>
+            </select>
+          </div>
+          <div class="form__row">
+            <label class="form__label" for="visit-date">방문 날짜</label>
+            <input type="date" id="visit-date" name="date" class="form__input" required>
+          </div>
+          <div class="form__row">
+            <label class="form__label" for="memo">방문 메모 <span class="form__optional">(선택)</span></label>
+            <textarea
+              id="memo"
+              name="memo"
+              class="form__input form__textarea"
+              rows="2"
+              placeholder="오늘 먹은 메뉴, 분위기 등"
+              maxlength="300"
+            ></textarea>
+          </div>
+          <button type="submit" class="btn btn--secondary">방문 기록 저장</button>
+        </form>
+      </section>
+
+      <section class="card" aria-labelledby="history-title">
+        <div class="card__header-row">
+          <h2 id="history-title" class="card__title">방문 기록</h2>
+          <span id="visit-count" class="badge">0건</span>
+        </div>
+        <ul id="visit-list" class="visit-list" aria-live="polite"></ul>
+        <p id="history-empty" class="empty-message">저장된 방문 기록이 없습니다.</p>
+      </section>
+
+      <section class="card" aria-labelledby="restaurant-title">
+        <div class="card__header-row">
+          <h2 id="restaurant-title" class="card__title">식당 목록</h2>
+          <span id="restaurant-count" class="badge">0곳</span>
+        </div>
+        <p id="restaurant-form-desc" class="card__desc">새 식당을 등록하거나, 목록에서 수정 버튼을 눌러 바로 고칠 수 있습니다.</p>
+        <form id="restaurant-form" class="form form--inline restaurant-add-form" novalidate>
+          <div class="form__row">
+            <label class="form__label" for="new-restaurant-name">식당 이름 <span class="form__required">(필수)</span></label>
+            <input
+              type="text"
+              id="new-restaurant-name"
+              class="form__input"
+              placeholder="검색 결과에서 자동 입력 · 직접 수정 가능"
+              required
+              maxlength="80"
+              autocomplete="off"
+            >
+          </div>
+          <div class="form__row">
+            <label class="form__label" for="new-restaurant-address">주소 검색 <span class="form__required">(필수)</span></label>
+            <div class="address-field">
+              <input
+                type="text"
+                id="new-restaurant-address"
+                class="form__input address-field__input"
+                placeholder="주소·건물명으로도 검색 가능"
+                autocomplete="off"
+                required
+              >
+              <input type="hidden" id="new-restaurant-lat">
+              <input type="hidden" id="new-restaurant-lng">
+              <input type="hidden" id="new-restaurant-resolved" value="">
+              <ul id="new-restaurant-suggestions" class="address-suggestions" hidden></ul>
+            </div>
+          </div>
+          <div class="form__grid form__grid--2">
+            <div class="form__row">
+              <label class="form__label" for="new-restaurant-cuisine">음식 종류 <span class="form__required">(필수)</span></label>
+              <select id="new-restaurant-cuisine" class="form__input" required>
+                <option value="">선택</option>
+                <option value="한식">한식</option>
+                <option value="중식">중식</option>
+                <option value="일식">일식</option>
+                <option value="아시안">아시안</option>
+                <option value="양식">양식</option>
+                <option value="패스트푸드">패스트푸드</option>
+                <option value="분식">분식</option>
+                <option value="기타">기타</option>
+              </select>
+            </div>
+            <div class="form__row">
+              <label class="form__label" for="new-restaurant-memo">메모 <span class="form__optional">(선택)</span></label>
+              <input
+                type="text"
+                id="new-restaurant-memo"
+                class="form__input"
+                placeholder="대표 메뉴 등"
+                maxlength="120"
+              >
+            </div>
+          </div>
+          <div class="form__row">
+            <label class="toggle-field" for="new-restaurant-team-leader-ok">
+              <span class="toggle-field__text">
+                <span class="toggle-field__title">팀장님과 함께 가능</span>
+                <span class="toggle-field__hint">끄면 추천에서 제외됩니다</span>
+              </span>
+              <input
+                type="checkbox"
+                id="new-restaurant-team-leader-ok"
+                class="toggle-field__input"
+                role="switch"
+                checked
+              >
+              <span class="toggle-field__switch" aria-hidden="true"></span>
+            </label>
+          </div>
+          <button type="submit" class="btn btn--secondary">식당 추가</button>
+        </form>
+
+        <div class="cuisine-tabs" id="restaurant-cuisine-tabs" role="tablist" aria-label="음식 종류 필터"></div>
+        <ul id="restaurant-list" class="restaurant-list" aria-live="polite"></ul>
+        <p id="restaurant-empty" class="empty-message">등록된 식당이 없습니다.</p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>어디가실래요? &mdash; 점심 고민, 여기서 끝</p>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+# 환경 변수 (민감 정보)
+.env
+.env.local
+.env.*.local
+
+# 예전 프론트 설정 파일 (더 이상 사용하지 않음)
+config.js
+
+# 의존성 / Vercel
+node_modules/
+.vercel/
+
+# OS / 에디터
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
