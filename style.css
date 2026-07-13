@@ -241,6 +241,32 @@ body {
   flex: 1;
 }
 
+.date-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  align-items: center;
+  min-width: 0;
+}
+
+@media (max-width: 420px) {
+  .date-field {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.35rem;
+  }
+}
+
+.date-field__weekday {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.date-field__weekday:empty {
+  display: none;
+}
+
 /* 모바일에서 native date input 고유 너비가 카드 밖으로 튀는 것 방지 */
 input[type="date"].form__input {
   display: block;
