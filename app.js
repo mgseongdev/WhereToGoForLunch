@@ -598,8 +598,74 @@ async function deleteVisit(id) {
   }
 }
 
+function cancelInlineEdit() {
+  editingRestaurantId = null;
+  inlineAddressSearch = null;
+}
+
 function cancelInlineVisitEdit() {
   editingVisitId = null;
+}
+
+function getInlineRestaurantPlace() {
+  const nameInput = document.getElementById("inline-restaurant-name");
+  const selected = inlineAddressSearch?.getSelectedPlace();
+
+  if (selected) return selected;
+
+  const lat = parseFloat(document.getElementById("inline-restaurant-lat")?.value ?? "");
+  const lng = parseFloat(document.getElementById("inline-restaurant-lng")?.value ?? "");
+  const address = document.getElementById("inline-restaurant-address")?.value.trim() ?? "";
+
+  if (!address || Number.isNaN(lat) || Number.isNaN(lng)) return null;
+
+  return {
+    name: nameInput?.value.trim() ?? "",
+    address,
+    latitude: lat,
+    longitude: lng,
+  };
+}
+
+function setupInlineAddressSearch(restaurant) {
+  const nameInput = document.getElementById("inline-restaurant-name");
+  const addressInput = document.getElementById("inline-restaurant-address");
+  const suggestions = document.getElementById("inline-restaurant-suggestions");
+  const latInput = document.getElementById("inline-restaurant-lat");
+  const lngInput = document.getElementById("inline-restaurant-lng");
+  const resolvedInput = document.getElementById("inline-restaurant-resolved");
+
+  if (!nameInput || !addressInput) return;
+
+  inlineAddressSearch = createAddressSearch({
+    input: addressInput,
+    list: suggestions,
+    latInput,
+    lngInput,
+    resolvedInput,
+    sortByReference: true,
+    getSearchQuery: (query) => {
+      const name = nameInput.value.trim();
+      if (document.activeElement === addressInput) {
+        return name ? `${name} ${query}` : query;
+      }
+      return query;
+    },
+    onSelectPlace: (place) => {
+      nameInput.value = place.name;
+    },
+  });
+
+  inlineAddressSearch.fill({
+    name: restaurant.name,
+    address: restaurant.address ?? "",
+    latitude: restaurant.latitude,
+    longitude: restaurant.longitude,
+  });
+
+  nameInput.addEventListener("input", () => {
+    inlineAddressSearch.search(nameInput.value, { clearOnSearch: false });
+  });
 }
 
 function daysSince(dateString) {
@@ -847,6 +913,125 @@ function renderRestaurantCuisineTabs(restaurants) {
 function getRestaurantsForActiveTab(restaurants) {
   if (restaurantCuisineTab === "전체") return restaurants;
   return restaurants.filter((restaurant) => restaurant.cuisine === restaurantCuisineTab);
+}
+
+function buildCuisineOptions(selected = "") {
+  const value = CUISINE_OPTIONS.includes(selected) ? selected : selected ? "기타" : "";
+
+  return [
+    `<option value="">선택</option>`,
+    ...CUISINE_OPTIONS.map(
+      (cuisine) =>
+        `<option value="${cuisine}" ${cuisine === value ? "selected" : ""}>${cuisine}</option>`
+    ),
+  ].join("");
+}
+
+function renderRestaurantViewItem(restaurant, visitCount) {
+  const distanceBadge =
+    restaurant.distanceBand != null
+      ? `<span class="distance-badge distance-badge--${restaurant.distanceBand}">${bandLabel(restaurant.distanceBand)} · ${formatDistance(restaurant.distanceMeters)}</span>`
+      : `<span class="distance-badge distance-badge--unknown">거리 미설정</span>`;
+  const teamLeaderBadge = restaurant.excludeForTeamLeader
+    ? `<span class="distance-badge distance-badge--excluded">팀장님 불가</span>`
+    : `<span class="distance-badge distance-badge--ok">팀장님 가능</span>`;
+
+  return `
+    <div class="restaurant-item__content">
+      <div class="restaurant-item__top">
+        <div>
+          <h3 class="restaurant-item__name">${escapeHtml(restaurant.name)}</h3>
+          <p class="restaurant-item__meta">${escapeHtml(restaurant.cuisine)} · 방문 ${visitCount}회</p>
+        </div>
+        <div class="restaurant-item__badges">
+          ${teamLeaderBadge}
+          ${distanceBadge}
+        </div>
+      </div>
+      ${restaurant.address ? `<p class="restaurant-item__address">${escapeHtml(restaurant.address)}</p>` : ""}
+      ${restaurant.memo ? `<p class="restaurant-item__memo">${escapeHtml(restaurant.memo)}</p>` : ""}
+    </div>
+    <div class="restaurant-item__actions">
+      <button type="button" class="btn btn--ghost btn--edit" data-edit-restaurant-id="${restaurant.id}">수정</button>
+      <button type="button" class="btn btn--ghost" data-delete-restaurant-id="${restaurant.id}">삭제</button>
+    </div>
+  `;
+}
+
+function renderRestaurantEditItem(restaurant) {
+  return `
+    <form class="restaurant-item__edit-form form" data-inline-edit-id="${restaurant.id}" novalidate>
+      <p class="restaurant-item__edit-label">식당 수정</p>
+      <div class="form__row">
+        <label class="form__label" for="inline-restaurant-name">식당 이름</label>
+        <input
+          type="text"
+          id="inline-restaurant-name"
+          class="form__input"
+          value="${escapeHtml(restaurant.name)}"
+          maxlength="80"
+          autocomplete="off"
+          required
+        >
+      </div>
+      <div class="form__row">
+        <label class="form__label" for="inline-restaurant-address">주소 검색</label>
+        <div class="address-field">
+          <input
+            type="text"
+            id="inline-restaurant-address"
+            class="form__input address-field__input"
+            value="${escapeHtml(restaurant.address ?? "")}"
+            placeholder="주소·건물명으로도 검색 가능"
+            autocomplete="off"
+            required
+          >
+          <input type="hidden" id="inline-restaurant-lat" value="${restaurant.latitude ?? ""}">
+          <input type="hidden" id="inline-restaurant-lng" value="${restaurant.longitude ?? ""}">
+          <input type="hidden" id="inline-restaurant-resolved" value="${restaurant.latitude != null && restaurant.longitude != null ? "1" : ""}">
+          <ul id="inline-restaurant-suggestions" class="address-suggestions" hidden></ul>
+        </div>
+      </div>
+      <div class="form__grid form__grid--2">
+        <div class="form__row">
+          <label class="form__label" for="inline-restaurant-cuisine">음식 종류</label>
+          <select id="inline-restaurant-cuisine" class="form__input" required>
+            ${buildCuisineOptions(restaurant.cuisine)}
+          </select>
+        </div>
+        <div class="form__row">
+          <label class="form__label" for="inline-restaurant-memo">메모 <span class="form__optional">(선택)</span></label>
+          <input
+            type="text"
+            id="inline-restaurant-memo"
+            class="form__input"
+            value="${escapeHtml(restaurant.memo ?? "")}"
+            maxlength="120"
+          >
+        </div>
+      </div>
+      <div class="form__row">
+        <label class="toggle-field" for="inline-restaurant-team-leader-ok">
+          <span class="toggle-field__text">
+            <span class="toggle-field__title">팀장님과 함께 가능</span>
+            <span class="toggle-field__hint">끄면 추천에서 제외됩니다</span>
+          </span>
+          <input
+            type="checkbox"
+            id="inline-restaurant-team-leader-ok"
+            class="toggle-field__input"
+            role="switch"
+            ${restaurant.excludeForTeamLeader ? "" : "checked"}
+          >
+          <span class="toggle-field__switch" aria-hidden="true"></span>
+        </label>
+      </div>
+      <div class="form__actions">
+        <button type="submit" class="btn btn--secondary">저장</button>
+        <button type="button" class="btn btn--ghost" data-cancel-inline-edit>취소</button>
+      </div>
+    </form>
+  `;
 }
 
 function renderRestaurants(restaurants, visits) {

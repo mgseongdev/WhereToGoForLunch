@@ -4,13 +4,18 @@
   "version": "1.0.0",
   "description": "어디가실래요? — 점심 식당 추천",
   "scripts": {
-    "dev": "vercel dev",
-    "start": "vercel dev"
+    "dev": "node scripts/local-server.js",
+    "start": "node scripts/local-server.js",
+    "smoke": "node scripts/smoke-test.mjs",
+    "vercel": "vercel dev"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.50.0"
+    "@supabase/supabase-js": "^2.50.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
   },
   "devDependencies": {
+    "nodemon": "^3.1.14",
     "vercel": "^44.0.0"
   }
 }
