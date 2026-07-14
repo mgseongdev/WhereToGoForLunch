@@ -40,10 +40,15 @@ module.exports = withHandler(async (req, res) => {
       .update(payload)
       .eq("id", id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       sendError(res, 500, error.message);
+      return;
+    }
+
+    if (!data) {
+      sendError(res, 403, "식당을 수정할 권한이 없습니다.");
       return;
     }
 

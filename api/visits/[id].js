@@ -12,41 +12,79 @@ module.exports = withHandler(async (req, res) => {
 
   if (req.method === "PUT" || req.method === "PATCH") {
     const body = await readJson(req);
-    const payload = {
-      restaurant_id: body.restaurant_id ?? body.restaurantId,
-      date: body.date,
-      memo: body.memo ?? "",
-    };
 
-    const { error } = await supabase.from("visits").update(payload).eq("id", id);
-    if (!error) {
-      sendJson(res, 200, { ok: true });
+    const attempts = [
+      {
+        payload: {
+          restaurant_id: body.restaurant_id ?? body.restaurantId,
+          date: body.date,
+          memo: body.memo ?? "",
+        },
+        select: "*, restaurants(name, cuisine)",
+      },
+      {
+        payload: {
+          name: body.name,
+          cuisine: body.cuisine,
+          date: body.date,
+          memo: body.memo ?? "",
+        },
+        select: "*",
+      },
+    ];
+
+    let lastError = null;
+
+    for (const attempt of attempts) {
+      const { data, error } = await supabase
+        .from("visits")
+        .update(attempt.payload)
+        .eq("id", id)
+        .select(attempt.select)
+        .maybeSingle();
+
+      if (error) {
+        lastError = error;
+        continue;
+      }
+
+      if (data) {
+        sendJson(res, 200, { visit: data, ok: true });
+        return;
+      }
+    }
+
+    if (lastError) {
+      sendError(res, 500, lastError.message);
       return;
     }
 
-    const legacyPayload = {
-      name: body.name,
-      cuisine: body.cuisine,
-      date: body.date,
-      memo: body.memo ?? "",
-    };
-
-    const legacy = await supabase.from("visits").update(legacyPayload).eq("id", id);
-    if (legacy.error) {
-      sendError(res, 500, legacy.error.message);
-      return;
-    }
-
-    sendJson(res, 200, { ok: true });
+    sendError(
+      res,
+      403,
+      "방문 기록을 수정할 수 없습니다. Supabase SQL Editor에서 migrate-visits-update.sql을 실행해 주세요."
+    );
     return;
   }
 
   if (req.method === "DELETE") {
-    const { error } = await supabase.from("visits").delete().eq("id", id);
+    const { data, error } = await supabase
+      .from("visits")
+      .delete()
+      .eq("id", id)
+      .select("id")
+      .maybeSingle();
+
     if (error) {
       sendError(res, 500, error.message);
       return;
     }
+
+    if (!data) {
+      sendError(res, 404, "삭제할 방문 기록을 찾지 못했거나 권한이 없습니다.");
+      return;
+    }
+
     sendJson(res, 200, { ok: true });
     return;
   }

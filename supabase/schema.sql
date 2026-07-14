@@ -59,3 +59,19 @@ create policy "reference_points public read" on reference_points for select usin
 create policy "reference_points public insert" on reference_points for insert with check (true);
 create policy "reference_points public update" on reference_points for update using (true);
 create policy "reference_points public delete" on reference_points for delete using (true);
+
+alter table visits enable row level security;
+
+drop policy if exists "Allow public read" on visits;
+drop policy if exists "Allow public insert" on visits;
+drop policy if exists "Allow public update" on visits;
+drop policy if exists "Allow public delete" on visits;
+drop policy if exists "visits public read" on visits;
+drop policy if exists "visits public insert" on visits;
+drop policy if exists "visits public update" on visits;
+drop policy if exists "visits public delete" on visits;
+
+create policy "visits public read" on visits for select using (true);
+create policy "visits public insert" on visits for insert with check (true);
+create policy "visits public update" on visits for update using (true) with check (true);
+create policy "visits public delete" on visits for delete using (true);

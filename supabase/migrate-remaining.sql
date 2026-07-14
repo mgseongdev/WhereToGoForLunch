@@ -39,3 +39,13 @@ alter table restaurants
 update restaurants
 set exclude_for_team_leader = false
 where exclude_for_team_leader is distinct from false;
+
+-- 5) visits: UPDATE 정책이 없어 메모/날짜 수정이 반영되지 않던 문제
+alter table visits enable row level security;
+
+drop policy if exists "Allow public update" on visits;
+drop policy if exists "visits public update" on visits;
+
+create policy "visits public update" on visits
+  for update using (true)
+  with check (true);
