@@ -12,7 +12,10 @@ create table if not exists restaurants (
   distance_meters integer,
   distance_band text check (distance_band in ('near', 'medium', 'far')),
   exclude_for_team_leader boolean not null default false,
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  updated_at timestamptz not null default now(),
+  created_by text,
+  updated_by text
 );
 
 create table if not exists reference_points (
@@ -36,6 +39,50 @@ alter table restaurants add column if not exists exclude_for_team_leader boolean
 
 alter table visits alter column name drop not null;
 alter table visits alter column cuisine drop not null;
+
+alter table visits add column if not exists updated_at timestamptz;
+alter table visits add column if not exists created_by text;
+alter table visits add column if not exists updated_by text;
+
+update visits
+set updated_at = coalesce(created_at, now())
+where updated_at is null;
+
+alter table visits alter column updated_at set default now();
+alter table visits alter column updated_at set not null;
+
+alter table restaurants add column if not exists updated_at timestamptz;
+alter table restaurants add column if not exists created_by text;
+alter table restaurants add column if not exists updated_by text;
+
+update restaurants
+set updated_at = coalesce(created_at, now())
+where updated_at is null;
+
+alter table restaurants alter column updated_at set default now();
+alter table restaurants alter column updated_at set not null;
+
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists restaurants_set_updated_at on restaurants;
+create trigger restaurants_set_updated_at
+  before update on restaurants
+  for each row
+  execute function public.set_updated_at();
+
+drop trigger if exists visits_set_updated_at on visits;
+create trigger visits_set_updated_at
+  before update on visits
+  for each row
+  execute function public.set_updated_at();
 
 alter table restaurants enable row level security;
 alter table reference_points enable row level security;

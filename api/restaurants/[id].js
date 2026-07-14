@@ -1,6 +1,7 @@
 const { getSupabase } = require("../_lib/supabase");
 const { withHandler, sendJson, sendError, readJson } = require("../_lib/http");
 const { applyDistance } = require("../_lib/distance");
+const { withUpdateTimestamps } = require("../_lib/timestamps");
 
 module.exports = withHandler(async (req, res) => {
   const supabase = getSupabase();
@@ -20,19 +21,21 @@ module.exports = withHandler(async (req, res) => {
       .limit(1)
       .maybeSingle();
 
-    const payload = applyDistance(
-      {
-        name: body.name,
-        cuisine: body.cuisine,
-        memo: body.memo ?? "",
-        address: body.address ?? "",
-        latitude: body.latitude ?? null,
-        longitude: body.longitude ?? null,
-        distance_meters: body.distance_meters ?? null,
-        distance_band: body.distance_band ?? null,
-        exclude_for_team_leader: Boolean(body.exclude_for_team_leader),
-      },
-      reference
+    const payload = withUpdateTimestamps(
+      applyDistance(
+        {
+          name: body.name,
+          cuisine: body.cuisine,
+          memo: body.memo ?? "",
+          address: body.address ?? "",
+          latitude: body.latitude ?? null,
+          longitude: body.longitude ?? null,
+          distance_meters: body.distance_meters ?? null,
+          distance_band: body.distance_band ?? null,
+          exclude_for_team_leader: Boolean(body.exclude_for_team_leader),
+        },
+        reference
+      )
     );
 
     const { data, error } = await supabase

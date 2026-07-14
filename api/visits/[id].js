@@ -1,5 +1,6 @@
 const { getSupabase } = require("../_lib/supabase");
 const { withHandler, sendJson, sendError, readJson } = require("../_lib/http");
+const { withUpdateTimestamps } = require("../_lib/timestamps");
 
 module.exports = withHandler(async (req, res) => {
   const supabase = getSupabase();
@@ -15,20 +16,20 @@ module.exports = withHandler(async (req, res) => {
 
     const attempts = [
       {
-        payload: {
+        payload: withUpdateTimestamps({
           restaurant_id: body.restaurant_id ?? body.restaurantId,
           date: body.date,
           memo: body.memo ?? "",
-        },
+        }),
         select: "*, restaurants(name, cuisine)",
       },
       {
-        payload: {
+        payload: withUpdateTimestamps({
           name: body.name,
           cuisine: body.cuisine,
           date: body.date,
           memo: body.memo ?? "",
-        },
+        }),
         select: "*",
       },
     ];

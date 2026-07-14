@@ -1,5 +1,6 @@
 const { getSupabase } = require("../_lib/supabase");
 const { withHandler, sendJson, sendError, readJson } = require("../_lib/http");
+const { withCreateTimestamps } = require("../_lib/timestamps");
 
 module.exports = withHandler(async (req, res) => {
   const supabase = getSupabase();
@@ -27,11 +28,11 @@ module.exports = withHandler(async (req, res) => {
 
   if (req.method === "POST") {
     const body = await readJson(req);
-    const payload = {
+    const payload = withCreateTimestamps({
       restaurant_id: body.restaurant_id ?? body.restaurantId,
       date: body.date,
       memo: body.memo ?? "",
-    };
+    });
 
     const joined = await supabase
       .from("visits")
@@ -44,12 +45,12 @@ module.exports = withHandler(async (req, res) => {
       return;
     }
 
-    const legacyPayload = {
+    const legacyPayload = withCreateTimestamps({
       name: body.name,
       cuisine: body.cuisine,
       date: body.date,
       memo: body.memo ?? "",
-    };
+    });
 
     const legacy = await supabase.from("visits").insert(legacyPayload).select().single();
     if (legacy.error) {
