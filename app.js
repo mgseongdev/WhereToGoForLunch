@@ -54,6 +54,7 @@ const els = {
   recommendEmpty: document.getElementById("recommend-empty"),
   recommendName: document.getElementById("recommend-name"),
   recommendMeta: document.getElementById("recommend-meta"),
+  recommendMemos: document.getElementById("recommend-memos"),
   toast: document.getElementById("toast"),
 };
 
@@ -739,6 +740,13 @@ function buildRestaurantProfiles(restaurants, visits) {
     }
 
     const daysSinceVisit = lastVisitDate ? daysSince(lastVisitDate) : null;
+    const visitMemos = restaurantVisits
+      .filter((visit) => visit.memo)
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+      .map((visit) => ({
+        date: visit.date,
+        memo: visit.memo,
+      }));
 
     return {
       restaurantId: restaurant.id,
@@ -752,6 +760,7 @@ function buildRestaurantProfiles(restaurants, visits) {
       lastVisitDate,
       daysSinceVisit,
       neverVisited: visitCount === 0,
+      visitMemos,
     };
   });
 }
@@ -1228,6 +1237,10 @@ function renderRecommendation(result) {
     lastRecommendedRestaurant = null;
     els.recommendResult.hidden = true;
     els.recommendEmpty.hidden = false;
+    if (els.recommendMemos) {
+      els.recommendMemos.hidden = true;
+      els.recommendMemos.innerHTML = "";
+    }
     return;
   }
 
@@ -1254,6 +1267,32 @@ function renderRecommendation(result) {
       : " · 아직 방문 기록 없음";
 
   els.recommendMeta.textContent = `${result.cuisine}${distanceText}${visitText}`;
+
+  const memos = result.visitMemos ?? [];
+  if (!els.recommendMemos) return;
+
+  if (memos.length === 0) {
+    els.recommendMemos.hidden = true;
+    els.recommendMemos.innerHTML = "";
+    return;
+  }
+
+  els.recommendMemos.hidden = false;
+  els.recommendMemos.innerHTML = `
+    <p class="recommend-result__memos-title">이전 방문 메모</p>
+    <ul class="recommend-result__memos-list">
+      ${memos
+        .map(
+          (item) => `
+        <li class="recommend-result__memo-item">
+          <span class="recommend-result__memo-date">${escapeHtml(formatDate(item.date))}</span>
+          <span class="recommend-result__memo-text">${escapeHtml(item.memo)}</span>
+        </li>
+      `
+        )
+        .join("")}
+    </ul>
+  `;
 }
 
 async function handleRecommendVisit() {

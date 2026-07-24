@@ -608,6 +608,48 @@ input[type="date"].form__input {
   font-size: 0.9rem;
 }
 
+.recommend-result__memos {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.recommend-result__memos-title {
+  margin: 0 0 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.recommend-result__memos-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.recommend-result__memo-item {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+}
+
+.recommend-result__memo-date {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.recommend-result__memo-text {
+  font-size: 0.9rem;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .recommend-result__actions {
   display: flex;
   justify-content: flex-end;
